@@ -1,0 +1,16 @@
+-dontwarn com.jcraft.jsch.**
+-dontwarn org.ietf.jgss.**
+-dontwarn org.slf4j.**
+-dontwarn org.apache.logging.log4j.**
+-dontwarn javax.naming.**
+-dontwarn java.lang.management.**
+-dontwarn org.apache.commons.net.**
+-keep class com.jcraft.jsch.** { *; }
+-dontwarn com.tom_roush.**
+-dontwarn com.gemalto.jp2.**
+-dontwarn org.apache.commons.compress.**
+-dontwarn org.tukaani.**
+-dontwarn com.github.junrar.**
+-dontwarn org.brotli.**
+-dontwarn com.github.luben.**
+-keep class com.tom_roush.pdfbox.** { *; }

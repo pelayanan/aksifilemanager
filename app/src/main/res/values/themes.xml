@@ -1,0 +1,11 @@
+<resources>
+    <style name="Theme.Aksi" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#0B3FBF</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.Post</item>
+    </style>
+    <style name="Theme.Post" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#0F172A</item>
+        <item name="android:navigationBarColor">#0F172A</item>
+    </style>
+</resources>

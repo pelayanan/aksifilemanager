@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Aksi File Manager icon</title>
+  <desc id="desc">Blue file folder with yellow tabs and a white A letter.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1263DF"/><stop offset="1" stop-color="#0636A7"/></linearGradient>
+    <linearGradient id="folder" x1="0" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#35A0FF"/><stop offset="1" stop-color="#0560E8"/></linearGradient>
+    <linearGradient id="yellow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFD950"/><stop offset="1" stop-color="#FF9E16"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#062D83" flood-opacity=".28"/></filter>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <path d="M86 161c0-19 15-34 34-34h87l32 32h151c22 0 40 18 40 40v151H86z" fill="url(#yellow)"/>
+    <path d="M86 202h344v28H86z" fill="#F58B0C" opacity=".5"/>
+    <path d="M65 217c0-20 16-36 36-36h108l32 35h170c20 0 36 16 36 36v130c0 20-16 36-36 36H101c-20 0-36-16-36-36z" fill="url(#folder)"/>
+    <path d="M65 253c0-16 13-29 29-29h324c16 0 29 13 29 29v20H65z" fill="#65B9FF" opacity=".45"/>
+    <path d="M256 236l76 155h-49l-14-31h-28l-14 31h-49z" fill="#FFFFFF"/>
+    <path d="M255 294l-14 34h28z" fill="#1263DF"/>
+  </g>
+</svg>
