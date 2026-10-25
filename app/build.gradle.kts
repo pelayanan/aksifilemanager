@@ -20,6 +20,9 @@ android {
         }
     }
     buildFeatures { compose = true }
+    testOptions {
+        unitTests { isReturnDefaultValues = true; isIncludeAndroidResources = true; all { it.maxHeapSize = "2g" } }
+    }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
@@ -37,6 +40,13 @@ dependencies {
     implementation("androidx.camera:camera-view:1.3.4")
     implementation("androidx.concurrent:concurrent-futures:1.2.0")
     implementation("com.google.guava:guava:31.1-android")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    testImplementation("androidx.test:core-ktx:1.6.1")
+    testImplementation("androidx.test.ext:junit:1.2.1")
+    testImplementation("androidx.test:runner:1.6.2")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
     // FTP / SFTP
     implementation("commons-net:commons-net:3.11.1")

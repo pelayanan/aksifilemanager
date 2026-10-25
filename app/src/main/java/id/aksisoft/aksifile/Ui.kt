@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import android.view.View
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -269,7 +270,9 @@ fun SRow(label: String, value: String = "", sw: Boolean? = null, onClick: () -> 
 @Composable
 fun Ad() {
     if (Prefs.ads) AndroidView({ ctx ->
-        AdView(ctx).apply { setAdSize(AdSize.BANNER); adUnitId = "ca-app-pub-3940256099942544/6300978111"; loadAd(AdRequest.Builder().build()) }
+        runCatching {
+            AdView(ctx).apply { setAdSize(AdSize.BANNER); adUnitId = "ca-app-pub-3940256099942544/6300978111"; loadAd(AdRequest.Builder().build()) }
+        }.getOrElse { View(ctx) }
     }, Modifier.fillMaxWidth())
 }
 

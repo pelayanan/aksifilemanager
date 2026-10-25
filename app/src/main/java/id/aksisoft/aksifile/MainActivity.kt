@@ -78,7 +78,7 @@ object Nav {
 class MainActivity : ComponentActivity() {
     override fun onCreate(b: Bundle?) {
         installSplashScreen(); super.onCreate(b)
-        Prefs.load(this); MobileAds.initialize(this); PDFBoxResourceLoader.init(applicationContext)
+        Prefs.load(this); runCatching { MobileAds.initialize(this) }; PDFBoxResourceLoader.init(applicationContext)
         setContent { App() }
     }
 }
