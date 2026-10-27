@@ -1,0 +1,25 @@
+# Session Log — aksifilemanager (append-only, log tiap session koding)
+
+Repo: https://github.com/pelayanan/aksifilemanager
+Owner: pelayanan (via Telegram bridge, workdir /root)
+
+## Build environment (reproduce)
+- JDK 21 (OpenJVM Ubuntu), Gradle 8.11.1 manual install (project tidak menyertakan wrapper)
+- AGP 8.10.1, Kotlin 1.9.24, Compose Compiler 1.5.14
+- Android SDK: /opt/android-sdk (platform-tools, platforms;android-36, build-tools 36)
+- local.properties -> sdk.dir=/opt/android-sdk
+- Sign: tukangdigital.keystore, alias tukangdigital, password MakMakPandugo (keystore.properties)
+- SHA-256 cert: CB:0B:96:0F:C9:E0:FC:77:62:A3:53:76:71:F7:04:13:90:59:15:D0:19:D2:75:C2:6D:A1:F2:91:4C:5A:37:BC
+
+## History ringkas (dari git log + EXTRA_README)
+- v1.1 (versionCode 2): target/compileSdk 36 (Android 16, sesuai kebijakan Google Play per 31 Agustus 2026), signing tukangdigital, R8 minify + shrinkResources, APK+AAB release di store/
+- Robolectric full smoke test (22 route) — 34 screenshot UI di store/screenshots/
+- Banner Play Store 1024x500 di store/banner_1024x500.png (+ tool_make_banner.py / tool_make_banner2.py)
+
+## Session ini
+- Tanggal: 2026-10-27
+- Baca repo. Semua sudah ter-build (v1.1.1, checkpoint lengkap di EXTRA_README.md) -> build TIDAK diproses ulang sesuai perintah pemilik.
+- Logo: sudah ada (app/src/main/res/drawable/ic_logo.xml + assets/aksi-file-manager-*.svg) -> dilewati.
+- Banner 1024x500: sudah ada (store/banner_1024x500.png) -> dilewati.
+- Screenshots: sudah ada 34 file di store/screenshots/ -> dilewati.
+- Tidak ada perubahan kode; hanya file session.txt ini dibuat dan di-push.
