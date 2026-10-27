@@ -35,3 +35,11 @@ Owner: pelayanan (via Telegram bridge, workdir /root)
 - Perf: cache snapshot file-tree (30s) + cache hasil scan per (root|cat|query) → reload tidak full-walk tiap refresh — fix #9
 - Beranda Images/Videos tab: fix "ga fungsi" (scan per-kategori + loading + cache)
 - v1.2 versionCode 3; APK/AAB release re-signed rebuild di store/
+
+## Session 2026-10-27 (kedua)
+- Perubahan: baris search field di halaman kategori (Gallery: All/Images/Videos/Documents/APK/Audio/Zip/Fav/Recent dipindah ke dalam TOP BAR (inline field semi-transparan putih di atas gradasi biru; judul jadi placeholder). Baris lama dihapus -> hemat 1 baris layar. File: app/src/main/java/id/aksisoft/aksifile/Screens2.kt
+- File test baru: app/src/test/java/id/aksisoft/aksifile/SearchBarShotTest.kt (Robolectric shot + verifikasi filter: ketik "appInfo" -> FILTER appInfo=1 notes=0)
+- Screenshot baru: store/screenshots/34_gallery_topbar_search.png, 35_gallery_topbar_query.png
+- Version di-naikkan: versionCode 3 -> 4, versionName 1.2 -> 1.2.1 (app/build.gradle.kts)
+- Build: assembleDebug sukses; assembleRelease (R8 minify) sukses & signed tukangdigital.keystore (CN=DoniMuslimin); bundleRelease sukses. Output ditimpa: store/aksifile-release.apk (29.98 MB), store/aksifile-release.aab (24.45 MB) + store/aksifile-debug.apk
+- Gradle path untuk build berikutnya: /tmp/opencode/env/gradle-8.11.1/bin/gradle (JVM args -Xmx3g)

@@ -17,6 +17,7 @@ import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -55,14 +56,23 @@ fun Gallery(init: String) {
     }
     val title = CATS.firstOrNull { it.first == cat }?.second?.let { t(it) } ?: cat.removePrefix("g:")
     Column(Modifier.fillMaxSize()) {
-        TopBar(title, { Nav.back() }) {
+        // Search inline di top bar (hemat satu baris layar); judul jadi placeholder.
+        Row(Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFF1E5BFF), Color(0xFF2F80FF))))
+            .statusBarsPadding().padding(start = 6.dp, end = 6.dp, top = 6.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("←", Modifier.clip(CircleShape).background(Color(0x26FFFFFF)).clickable { Nav.back() }
+                .padding(horizontal = 12.dp, vertical = 2.dp), color = Color.White, fontSize = 20.sp)
+            OutlinedTextField(q, { q = it }, Modifier.weight(1f).padding(start = 8.dp), singleLine = true,
+                shape = RoundedCornerShape(22.dp), textStyle = TextStyle(color = Color.White, fontSize = 15.sp),
+                placeholder = { Text("🔍 $title", color = Color.White.copy(alpha = .75f), maxLines = 1) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color(0x26FFFFFF), unfocusedContainerColor = Color(0x1AFFFFFF),
+                    focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent,
+                    cursorColor = Color.White, focusedTextColor = Color.White, unfocusedTextColor = Color.White))
             if (cat.startsWith("g:")) {
                 TextButton({ dlg = "addf" }) { Text("＋📁") }
                 TextButton({ Gal.delete(cat.drop(2)); cat = "all"; gt++ }) { Text("🗑") }
             }
         }
-        OutlinedTextField(q, { q = it }, Modifier.fillMaxWidth().padding(12.dp, 4.dp), singleLine = true, shape = RoundedCornerShape(24.dp),
-            placeholder = { Text("🔍 " + t("Search")) })
         Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             CATS.forEach { (k, n) -> FilterChip(cat == k, { cat = k }, { Text(t(n)) }) }
             custom.forEach { n -> FilterChip(cat == "g:$n", { cat = "g:$n" }, { Text("🖼 $n") }) }
