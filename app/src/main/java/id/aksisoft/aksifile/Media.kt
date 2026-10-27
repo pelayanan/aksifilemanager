@@ -21,15 +21,15 @@ data class Ed(val rot: Int = 0, val fh: Boolean = false, val fv: Boolean = false
     val fil: Int = 0, val br: Float = 0f, val ct: Float = 1f, val sat: Float = 1f, val warm: Float = 0f, val sharp: Boolean = false)
 
 object Media {
-    private val cache = LruCache<String, Bitmap>(60)
+    private val cache = LruCache<String, Bitmap>(80)
 
-    fun thumb(f: File): Bitmap? = cache.get(f.path) ?: runCatching {
+    fun thumb(f: File, max: Int = 220): Bitmap? = cache.get("${f.path}|$max") ?: runCatching {
         val b = when (FS.kind(f)) {
-            1 -> decode(f, 220)
+            1 -> decode(f, max)
             2 -> MediaMetadataRetriever().run { setDataSource(f.path); val x = getFrameAtTime(1_000_000); release(); x }
             else -> null
         }
-        b?.also { cache.put(f.path, it) }
+        b?.also { cache.put("${f.path}|$max", it) }
     }.getOrNull()
 
     fun decode(f: File, max: Int): Bitmap? {

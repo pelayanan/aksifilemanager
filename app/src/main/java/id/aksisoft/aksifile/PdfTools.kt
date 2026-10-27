@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.*
+import androidx.compose.foundation.gestures.detectTransformGestures
 import java.io.File
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -83,19 +84,23 @@ fun PdfScreen(f: File) {
             Toast.makeText(c, res.map { "✓ " + it.name }.getOrElse { it.message ?: "Error" }, Toast.LENGTH_LONG).show()
         }
     }
+    val zoom = rememberZoom(); val zsc = zoom.first.first; val zpan = zoom.first.second
     Column(Modifier.fillMaxSize()) {
         TopBar(f.name, { Nav.back() }) {
             TextButton({ scope.launch { txt = withContext(Dispatchers.IO) { runCatching { Pdf.text(f) }.getOrElse { it.message ?: "Error" } }; dlg = "text" } }) { Text("Aa") }
             TextButton({ dlg = "stamp" }) { Text("✎") }
             TextButton({ dlg = "split" }) { Text("✂") }
         }
-        if (r == null) Text("Cannot open PDF", Modifier.padding(24.dp)) else LazyColumn(contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(r.pageCount) { i ->
-                val b by produceState<Bitmap?>(null, i) { value = withContext(Dispatchers.IO) { synchronized(r) { runCatching { Media.pdfPage(r, i, 1080) }.getOrNull() } } }
-                val bm = b
-                if (bm != null) Image(bm.asImageBitmap(), null, Modifier.fillMaxWidth(), contentScale = ContentScale.FillWidth)
-                else Box(Modifier.fillMaxWidth().height(400.dp).background(K.card))
+        if (r == null) Text("Cannot open PDF", Modifier.padding(24.dp)) else Box(Modifier.weight(1f).fillMaxWidth(), Alignment.TopCenter) {
+            LazyColumn(contentPadding = PaddingValues(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp), modifier = zoom.second) {
+                items(r.pageCount) { i ->
+                    val b by produceState<Bitmap?>(null, i) { value = withContext(Dispatchers.IO) { synchronized(r) { runCatching { Media.pdfPage(r, i, 1080) }.getOrNull() } } }
+                    val bm = b
+                    if (bm != null) Image(bm.asImageBitmap(), null, Modifier.fillMaxWidth(), contentScale = ContentScale.FillWidth)
+                    else Box(Modifier.fillMaxWidth().height(400.dp).background(K.card))
+                }
             }
+            if (zsc.value > 1f) TextButton({ zsc.value = 1f; zpan.value = Offset.Zero }, Modifier.align(Alignment.BottomEnd).padding(12.dp)) { Text("🔍 1:1") }
         }
     }
     when (dlg) {

@@ -41,14 +41,22 @@ class ToolItem(val i: String, val l: String, val c: Color, val a: () -> Unit)
 @Composable
 fun Analyzer(dir: File) {
     var res by remember { mutableStateOf<Pair<LongArray, List<Pair<File, Long>>>?>(null) }
-    LaunchedEffect(dir) { res = withContext(Dispatchers.IO) { FS.analyze(dir) } }
+    var pr by remember { mutableStateOf<Pair<Long, Pair<Long, String>>?>(null) }
+    LaunchedEffect(dir) {
+        res = withContext(Dispatchers.IO) { FS.analyze(dir) { n, b, p -> pr = (n to (b to p)) } }
+        pr = null
+    }
     val names = listOf("Others", "Images", "Videos", "Documents", "Apps", "Audio", "Compressed")
     val cols = listOf(Color(0xFF9AA4B2), BLUE, Color(0xFFEF4444), Color(0xFF22C55E), Color(0xFFF59E0B), Color(0xFFA855F7), Color(0xFFF97316))
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         TopBar(t("Storage Analyzer"), { Nav.back() })
         Text(dir.path, Modifier.padding(horizontal = 20.dp), fontSize = 12.sp, color = K.sub)
         val r = res
-        if (r == null) CircularProgressIndicator(Modifier.padding(32.dp)) else {
+        if (r == null) {
+            val p = pr
+            ScanBar("🔍 " + t("Scanning") + " ${p?.first ?: 0} " + t("files") + " • ${FS.fmt(p?.second?.first ?: 0)}" +
+                (p?.second?.second?.let { " • $it" } ?: ""))
+        } else {
             val tot = r.first.sum().coerceAtLeast(1)
             Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(140.dp), Alignment.Center) {
@@ -84,12 +92,22 @@ fun Analyzer(dir: File) {
 fun Dups() {
     val c = LocalContext.current
     var d by remember { mutableStateOf<List<File>?>(null) }
+    var pr by remember { mutableStateOf<Pair<Long, String>?>(null) }
     var ask by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { d = withContext(Dispatchers.IO) { FS.dups(FS.roots(c)[0]) } }
+    LaunchedEffect(Unit) {
+        d = withContext(Dispatchers.IO) { FS.dups(FS.roots(c)[0]) { n, p -> pr = n to p } }
+        pr = null
+    }
     Column(Modifier.fillMaxSize()) {
         TopBar(t("Duplicates"), { Nav.back() })
         val l = d
-        if (l == null) CircularProgressIndicator(Modifier.padding(32.dp)) else {
+        if (l == null) {
+            val p = pr
+            Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
+                CircularProgressIndicator(Modifier.padding(bottom = 14.dp))
+                ScanBar("🐞 LeafExplore — leafscan debug (streaming)\n"+(p?.first ?: 0) + t("files") + (p?.second?.let { " • $it" } ?: ""))
+            }
+        } else {
             Text("${l.size} ${t("Duplicates").lowercase()} • ${FS.fmt(l.sumOf { it.length() })}", Modifier.padding(horizontal = 20.dp), fontSize = 16.sp)
             Button({ ask = true }, Modifier.padding(20.dp, 8.dp), enabled = l.isNotEmpty()) { Text(t("Delete")) }
             LazyColumn(contentPadding = PaddingValues(horizontal = 20.dp)) { items(l) { Text(it.path, Modifier.padding(vertical = 4.dp), fontSize = 12.sp, maxLines = 2, color = K.sub) } }

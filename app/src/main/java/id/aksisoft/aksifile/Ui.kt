@@ -16,6 +16,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -235,17 +239,52 @@ App info=Info aplikasi
 Uninstall=Copot
 Download Folder=Folder Unduhan
 Folder name=Nama folder
-Edit text=Edit teks""".lines().associate { it.substringBefore('=') to it.substringAfter('=') }
+Edit text=Edit teks
+Move=Pindah
+Loading=Memuat
+No files=Tidak ada file
+Scanning=Memindai
+Preview=Pratinjau
+Edit=Edit
+Back=Kembali""".lines().associate { it.substringBefore('=') to it.substringAfter('=') }
 
 fun t(k: String) = if (Prefs.lang == "id") IDS[k] ?: k else k
 
 @Composable
 fun TopBar(title: String, back: (() -> Unit)? = null, right: @Composable RowScope.() -> Unit = {}) {
-    Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        if (back != null) TextButton(back) { Text("←", fontSize = 20.sp, color = K.tx) } else Spacer(Modifier.width(12.dp))
-        Text(title, Modifier.weight(1f), fontSize = 19.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        right()
+    Row(Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFF1E5BFF), Color(0xFF2F80FF))))
+        .statusBarsPadding().padding(horizontal = 6.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (back != null) Text("←", Modifier.clip(CircleShape).background(Color(0x26FFFFFF))
+            .clickable { back() }.padding(horizontal = 12.dp, vertical = 2.dp), color = Color.White, fontSize = 20.sp)
+        else Spacer(Modifier.width(14.dp))
+        Text(title, Modifier.weight(1f).padding(horizontal = 8.dp), color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+        CompositionLocalProvider(LocalContentColor provides Color.White) { right() }
     }
+}
+
+/** Indeterminate or indeterminate-with-label loading bar, dipakai saat scan/list memuat. */
+@Composable
+fun ScanBar(text: String, progress: Float? = null) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp)) {
+        Text(text, fontSize = 12.sp, color = K.sub, maxLines = 2)
+        if (progress == null) LinearProgressIndicator(Modifier.padding(top = 4.dp).fillMaxWidth())
+        else LinearProgressIndicator({ progress }, Modifier.padding(top = 4.dp).fillMaxWidth().height(6.dp).clip(CircleShape))
+    }
+}
+
+/** Pinch-zoom helper untuk pratinjau gambar/PDF: scale, pan, dan modifier siap pakai. */
+@Composable
+fun rememberZoom(): Pair<Pair<MutableState<Float>, MutableState<Offset>>, Modifier> {
+    val sc = remember { mutableStateOf(1f) }
+    val pan = remember { mutableStateOf(Offset.Zero) }
+    val m = Modifier.clipToBounds().graphicsLayer { scaleX = sc.value; scaleY = sc.value; translationX = pan.value.x; translationY = pan.value.y }
+        .pointerInput(Unit) {
+            detectTransformGestures { _, p, z, _ ->
+                sc.value = (sc.value * z).coerceIn(1f, 10f)
+                pan.value = if (sc.value > 1f) Offset(pan.value.x + p.x, pan.value.y + p.y) else Offset.Zero
+            }
+        }
+    return (sc to pan) to m
 }
 
 @Composable

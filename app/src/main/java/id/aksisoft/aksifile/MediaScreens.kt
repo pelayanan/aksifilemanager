@@ -29,6 +29,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTransformGestures
 import java.io.File
 import android.Manifest
 import android.content.ClipData
@@ -88,6 +93,56 @@ fun VideoScreen(f: File) {
     }
 }
 
+// ---------- Image preview FIRST: swipe antar foto, Share / Edit / delete, pinch-zoom ----------
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun ImgPrev(f0: File) {
+    val c = LocalContext.current
+    val siblings = remember(f0.path) {
+        (f0.parentFile?.let { FS.list(it) } ?: emptyList()).filter { it.isFile && FS.kind(it) == 1 }
+            .ifEmpty { listOf(f0) }
+    }
+    val init = siblings.indexOfFirst { it.name == f0.name }.coerceAtMost(siblings.size - 1).coerceAtLeast(0)
+    val pager = rememberPagerState(initialPage = init) { siblings.size }
+    var menu by remember { mutableStateOf(false) }
+    val f = siblings.getOrNull(pager.currentPage) ?: f0
+    val zoom = rememberZoom()
+    Column(Modifier.fillMaxSize().background(Color.Black)) {
+        Box(Modifier.weight(1f), Alignment.Center) {
+            HorizontalPager(pager, Modifier.fillMaxSize()) { i ->
+                val g = siblings.getOrNull(i) ?: f0
+                val bm by produceState<Bitmap?>(null, g) {
+                    value = withContext(Dispatchers.IO) { Media.thumb(g, 1600) ?: Media.decode(g, 1600) }
+                }
+                val bv = bm
+                val (_, zmp) = zoom
+                if (bv != null) Image(bv.asImageBitmap(), null, zmp.fillMaxSize(), contentScale = ContentScale.Fit)
+                else CircularProgressIndicator(color = Color.White)
+            }
+            Row(Modifier.fillMaxWidth().statusBarsPadding().background(Color(0x66000000)).padding(horizontal = 6.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Text("←", Modifier.clickable { Nav.back() }.padding(horizontal = 10.dp), color = Color.White, fontSize = 20.sp)
+                Text("${pager.currentPage + 1}/${siblings.size}  ${f.name}", Modifier.weight(1f), color = Color.White, fontSize = 13.sp, maxLines = 1)
+                TextButton({ menu = true }) { Text("⋮", color = Color.White) }
+                DropdownMenu(menu, { menu = false }) {
+                    listOf(
+                        "Share" to { FS.share(c, f) },
+                        "Edit" to { Nav.go("image_edit", f) },
+                        "Open with" to { FS.chooser(c, f) },
+                        "Open in browser" to { FS.open(c, f, "text/html") },
+                        "Favorite" to { Toast.makeText(c, if (FS.fav(f)) "⭐" else "☆", Toast.LENGTH_SHORT).show() },
+                        "Delete" to { f.deleteRecursively(); Nav.tick++; Toast.makeText(c, "🗑", Toast.LENGTH_SHORT).show() }
+                    ).forEach { (a, act) -> DropdownMenuItem({ Text(t(a)) }, { menu = false; act() }) }
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth().background(Color(0xCC101623)).padding(horizontal = 24.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Button({ FS.share(c, f) }, Modifier.weight(1f)) { Text("↗ " + t("Share")) }
+            Button({ Nav.go("image_edit", f) }, Modifier.weight(1f)) { Text("✎ " + t("Edit")) }
+        }
+    }
+}
+
 // ---------- QR scanner: live camera + from image ----------
 @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
 @Composable
@@ -96,33 +151,40 @@ fun QrScreen() {
     val lo = LocalLifecycleOwner.current
     var res by remember { mutableStateOf<String?>(null) }
     var cam by remember { mutableStateOf(c.checkSelfPermission(Manifest.permission.CAMERA) == 0) }
-    val perm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { cam = it }
+    var err by remember { mutableStateOf<String?>(null) }
+    var epoch by remember { mutableIntStateOf(0) } // reset kamera kalau start ulang
+    val perm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { cam = it; epoch++ }
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { u -> if (u != null) Media.scanUri(c, u) { res = it } }
     LaunchedEffect(Unit) { if (!cam) perm.launch(Manifest.permission.CAMERA) }
+    val pv = remember { mutableStateOf<PreviewView?>(null) }
+    LaunchedEffect(cam, epoch) {
+        err = null
+        if (!cam) return@LaunchedEffect
+        val view = pv.value ?: return@LaunchedEffect
+        runCatching {
+            val p = ProcessCameraProvider.getInstance(c).get()
+            val pre = Preview.Builder().build().also { it.setSurfaceProvider(view.surfaceProvider) }
+            val an = ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build()
+            val sc = BarcodeScanning.getClient()
+            an.setAnalyzer(ContextCompat.getMainExecutor(c)) { px ->
+                val m = px.image
+                if (m != null) sc.process(InputImage.fromMediaImage(m, px.imageInfo.rotationDegrees))
+                    .addOnSuccessListener { b -> b.firstOrNull()?.rawValue?.let { v -> if (res == null) res = v } }
+                    .addOnCompleteListener { px.close() }
+                else px.close()
+            }
+            p.unbindAll(); p.bindToLifecycle(lo, CameraSelector.DEFAULT_BACK_CAMERA, pre, an)
+        }.onFailure { err = it.message ?: "Gagal memulai kamera" }
+    }
     Box(Modifier.fillMaxSize().background(Color.Black)) {
-        if (cam) AndroidView({ ctx ->
-            val pv = PreviewView(ctx)
-            val fut = ProcessCameraProvider.getInstance(ctx)
-            fut.addListener({
-                val pre = Preview.Builder().build().also { it.setSurfaceProvider(pv.surfaceProvider) }
-                val an = ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build()
-                val sc = BarcodeScanning.getClient()
-                an.setAnalyzer(ContextCompat.getMainExecutor(ctx)) { px ->
-                    val m = px.image
-                    if (m != null && res == null) sc.process(InputImage.fromMediaImage(m, px.imageInfo.rotationDegrees))
-                        .addOnSuccessListener { b -> b.firstOrNull()?.rawValue?.let { v -> if (res == null) res = v } }
-                        .addOnCompleteListener { px.close() }
-                    else px.close()
-                }
-                val p = fut.get(); p.unbindAll(); p.bindToLifecycle(lo, CameraSelector.DEFAULT_BACK_CAMERA, pre, an)
-            }, ContextCompat.getMainExecutor(ctx))
-            pv
-        }, Modifier.fillMaxSize())
+        AndroidView({ ctx -> PreviewView(ctx).also { pv.value = it } }, modifier = Modifier.fillMaxSize())
+        if (!cam) Text("Camera permission", Modifier.align(Alignment.Center), color = Color.White)
+        err?.let { Text(it, Modifier.align(Alignment.Center), color = Color.White) }
         Text("←", Modifier.align(Alignment.TopStart).clickable { Nav.back() }.padding(20.dp), color = Color.White, fontSize = 22.sp)
         Box(Modifier.align(Alignment.Center).size(240.dp).border(3.dp, BLUE, RoundedCornerShape(20.dp)))
         Text(t("Align the QR code within the frame"), Modifier.align(Alignment.Center).padding(top = 300.dp), color = Color.White, fontSize = 13.sp)
         Row(Modifier.align(Alignment.BottomCenter).padding(24.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button({ if (cam) res = null else perm.launch(Manifest.permission.CAMERA) }) { Text("📷 " + t("Camera")) }
+            Button({ if (cam) { res = null; epoch++ } else perm.launch(Manifest.permission.CAMERA) }) { Text("📷 " + t("Camera")) }
             OutlinedButton({ pick.launch("image/*") }) { Text("🖼 " + t("From Image"), color = Color.White) }
         }
     }

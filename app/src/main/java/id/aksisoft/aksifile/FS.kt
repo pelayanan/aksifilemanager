@@ -80,15 +80,32 @@ object FS {
         Prefs.sp.edit().putString("rec", l.joinToString("\n")).apply()
     }
 
-    fun scan(root: File, cat: String, q: String): List<File> {
-        val k = when (cat) { "img" -> 1; "vid" -> 2; "doc" -> 3; "apk" -> 4; "aud" -> 5; "zip" -> 6; else -> 0 }
+    private var scanK = ""; private var scanL: List<File> = emptyList()
+
+    /** Snapshot file-tree cache: 1 x walk utk semua kategori, auto-expire 30 dtk / kalau root beda. */
+    fun snapshot(root: File): List<File> {
+        val now = System.currentTimeMillis()
+        if (snapK == root.path && now - snapAt < 30000) return snapL
+        snapL = root.walkTopDown().onEnter { Prefs.hidden || (!it.name.startsWith('.') && it.name != "Android") }
+            .filter { it.isFile }.take(8000).toList()
+        snapK = root.path; snapAt = now
+        return snapL
+    }
+    private var snapK = ""; private var snapAt = 0L; private var snapL: List<File> = emptyList()
+
+    fun scan(root: File, cat: String, q: String, force: Boolean = false): List<File> {
+        val k = "${root.path}|$cat|$q"
+        if (!force && k == scanK) return scanL
+        val k2 = when (cat) { "img" -> 1; "vid" -> 2; "doc" -> 3; "apk" -> 4; "aud" -> 5; "zip" -> 6; else -> 0 }
         val src: Sequence<File> = when (cat) {
             "fav" -> Prefs.set("fav").map { File(it) }.asSequence()
             "rec" -> Prefs.sp.getString("rec", "")!!.split('\n').filter { it.isNotBlank() }.map { File(it) }.asSequence()
             else -> if (cat.startsWith("g:")) (Gal.all()[cat.drop(2)] ?: emptyList()).asSequence().map { File(it) }
-                .flatMap { if (it.isDirectory) it.walkTopDown().filter { x -> x.isFile } else sequenceOf(it) } else root.walkTopDown().onEnter { Prefs.hidden || (!it.name.startsWith('.') && it.name != "Android") }
+                .flatMap { if (it.isDirectory) it.walkTopDown().filter { x -> x.isFile } else sequenceOf(it) } else snapshot(root).asSequence()
         }
-        return src.filter { it.exists() && (it.isFile || cat == "fav") && (k == 0 || kind(it) == k) && it.name.contains(q, true) }.take(1000).toList()
+        val out = src.filter { it.exists() && (it.isFile || cat == "fav") && (k2 == 0 || kind(it) == k2) && it.name.contains(q, true) }.take(2000).toList()
+        scanL = out; scanK = k
+        return out
     }
 
     fun zip(src: List<File>, out: File) = ZipOutputStream(out.outputStream().buffered()).use { z ->
@@ -119,9 +136,12 @@ object FS {
         if (!(cut && f.renameTo(t))) { f.copyRecursively(t, true); if (cut) f.deleteRecursively() }
     }
 
-    fun analyze(dir: File): Pair<LongArray, List<Pair<File, Long>>> {
-        val by = LongArray(7)
-        dir.walkTopDown().filter { it.isFile }.forEach { by[kind(it)] += it.length() }
+    fun analyze(dir: File, pr: (Long, Long, String) -> Unit = { _, _, _ -> }): Pair<LongArray, List<Pair<File, Long>>> {
+        val by = LongArray(7); var n = 0L; var bt = 0L
+        dir.walkTopDown().filter { it.isFile }.forEach { f ->
+            by[kind(f)] += f.length(); n++; bt += f.length()
+            if (n % 40 == 0L) pr(n, bt, f.parent ?: dir.path)
+        }
         val kids = (dir.listFiles() ?: emptyArray()).map { it to size(it) }.sortedByDescending { it.second }.take(10)
         return by to kids
     }
@@ -132,7 +152,18 @@ object FS {
         m.digest().joinToString("") { "%02x".format(it) }
     }.getOrDefault(f.path)
 
-    fun dups(root: File): List<File> = root.walkTopDown().onEnter { it.name != "Android" }.filter { it.isFile && it.length() > 0 }
-        .groupBy { it.length() }.values.filter { it.size > 1 }
-        .flatMap { g -> g.groupBy { md5(it) }.values.filter { it.size > 1 }.flatMap { it.drop(1) } }
+    fun dups(root: File, pr: (Long, String) -> Unit = { _, _ -> }): List<File> {
+        var n = 0L
+        val cand = root.walkTopDown().onEnter { it.name != "Android" }
+            .filter { it.isFile && it.length() > 0 }
+            .onEach { n++; if (n % 40 == 0L) pr(n, it.parent ?: root.path) }
+            .groupBy { it.length() }.values.filter { it.size > 1 }
+        var cnt = 0L
+        return cand.flatMap { g ->
+            val dup = g.groupBy { md5(it) }.values.filter { it.size > 1 }.flatMap { it.drop(1) }
+            cnt += dup.size
+            pr(n, "hashing… ${cnt} dup")
+            dup
+        }
+    }
 }

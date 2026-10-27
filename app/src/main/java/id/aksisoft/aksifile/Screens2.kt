@@ -32,16 +32,27 @@ import kotlinx.coroutines.*
 import java.io.File
 import android.os.Environment
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Gallery(init: String) {
     val c = LocalContext.current
     var cat by remember { mutableStateOf(init) }
     var q by remember { mutableStateOf("") }
-    var list by remember { mutableStateOf(listOf<File>()) }
+    var list by remember { mutableStateOf<List<File>?>(null) }
+    var sel by remember { mutableStateOf(setOf<File>()) }
+    var del by remember { mutableStateOf<List<File>?>(null) }
     var gt by remember { mutableStateOf(0) }
     var dlg by remember { mutableStateOf("") }
+    var lastTick by remember { mutableIntStateOf(-1) }
+    var lastQ by remember { mutableStateOf("") }
     val custom = remember(gt) { Gal.all().keys.toList() }
-    LaunchedEffect(cat, q, Nav.tick, gt) { list = withContext(Dispatchers.IO) { FS.scan(FS.roots(c)[0], cat, q) } }
+    LaunchedEffect(cat, q, Nav.tick, gt) {
+        if (q != lastQ) delay(350) // debounce ketik biar scan tidak jalan di setiap huruf
+        lastQ = q
+        val force = lastTick != Nav.tick; lastTick = Nav.tick
+        list = null
+        list = withContext(Dispatchers.IO) { FS.scan(FS.roots(c)[0], cat, q, force) }
+    }
     val title = CATS.firstOrNull { it.first == cat }?.second?.let { t(it) } ?: cat.removePrefix("g:")
     Column(Modifier.fillMaxSize()) {
         TopBar(title, { Nav.back() }) {
@@ -57,12 +68,37 @@ fun Gallery(init: String) {
             custom.forEach { n -> FilterChip(cat == "g:$n", { cat = "g:$n" }, { Text("🖼 $n") }) }
             FilterChip(false, { dlg = "newg" }, { Text("＋ " + t("New gallery")) })
         }
-        if (cat == "img" || cat == "vid" || cat.startsWith("g:")) LazyVerticalGrid(GridCells.Adaptive(100.dp), Modifier.weight(1f).padding(top = 8.dp),
+        if (sel.isNotEmpty()) Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("✓ ${sel.size}", Modifier.padding(end = 6.dp))
+            listOf("Share", "Copy", "Move", "Delete").forEach { a -> TextButton({
+                when (a) {
+                    "Share" -> { sel.firstOrNull()?.let { FS.share(c, it) } }
+                    "Copy" -> { Nav.clip = sel.toList(); Nav.cut = false }
+                    "Move" -> { Nav.clip = sel.toList(); Nav.cut = true }
+                    "Delete" -> del = sel.toList()
+                }
+                if (a != "Delete") sel = setOf()
+            }) { Text(t(a), fontSize = 12.sp) } }
+            TextButton({ sel = setOf() }) { Text("✕") }
+        }
+        val l = list
+        if (l == null) ScanBar(t("Loading") + "…")
+        else if (l.isEmpty()) Text(t("No files"), Modifier.padding(20.dp), color = K.sub)
+        else if (cat == "img" || cat == "vid" || cat.startsWith("g:")) LazyVerticalGrid(GridCells.Adaptive(100.dp), Modifier.weight(1f).padding(top = 8.dp),
             contentPadding = PaddingValues(4.dp), horizontalArrangement = Arrangement.spacedBy(3.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            items(list) { f -> Thumb(f, Modifier.aspectRatio(1f).clickable { Nav.open(c, f) }) }
+            items(l) { f ->
+                Box(Modifier.aspectRatio(1f).clip(RoundedCornerShape(8.dp)).background(if (f in sel) BLUE else Color.Transparent)
+                    .padding(2.dp)) {
+                    Thumb(f, Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)).combinedClickable(
+                        onClick = { if (sel.isNotEmpty()) sel = if (f in sel) sel - f else sel + f else Nav.open(c, f) },
+                        onLongClick = { sel = sel + f }))
+                }
+            }
         } else LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(12.dp)) {
-            items(list) { f ->
-                Row(Modifier.fillMaxWidth().clickable { Nav.open(c, f) }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            items(l) { f ->
+                Row(Modifier.fillMaxWidth().background(if (f in sel) BLUE.copy(alpha = .25f) else Color.Transparent, RoundedCornerShape(10.dp))
+                    .combinedClickable(onClick = { if (sel.isNotEmpty()) sel = if (f in sel) sel - f else sel + f else Nav.open(c, f) }, onLongClick = { sel = sel + f })
+                    .padding(vertical = 6.dp, horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                     Thumb(f, Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)), 22.sp)
                     Column(Modifier.padding(start = 12.dp)) {
                         Text(f.name, maxLines = 1)
@@ -71,6 +107,11 @@ fun Gallery(init: String) {
                 }
             }
         }
+    }
+    del?.let { dl ->
+        AlertDialog({ del = null },
+            confirmButton = { TextButton({ dl.forEach { it.deleteRecursively() }; del = null; sel = setOf(); Nav.tick++ }) { Text(t("Delete")) } },
+            dismissButton = { TextButton({ del = null }) { Text(t("Cancel")) } }, text = { Text(t("Delete selected?") + " (${dl.size})") })
     }
     when (dlg) {
         "newg" -> {

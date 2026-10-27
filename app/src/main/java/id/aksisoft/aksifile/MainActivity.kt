@@ -67,7 +67,7 @@ object Nav {
             in FS.ZIP -> go("archive", f)
             "csv" -> go("csv", f)
             "pdf" -> go("pdf", f)
-            in FS.IMG -> go("image", f)
+            in FS.IMG -> go("imgprev", f)
             in FS.VID -> go("video", f)
             in FS.TXT -> go("editor", f)
             else -> FS.open(c, f)
@@ -140,6 +140,7 @@ fun Main() {
                 "pin_apk" -> PinFlow("verify") { Nav.back(); FS.open(c, a as File) }
                 "archive" -> ArchiveScreen(a as File); "docx" -> DocxScreen(a as File); "xlsx" -> XlsxScreen(a as File)
                 "pptx" -> PptxScreen(a as File); "apps" -> AppsScreen(); "cleaner" -> Cleaner()
+                "imgprev" -> ImgPrev(a as File); "image_edit" -> ImageScreen(a as File)
             } }
         }
         if (r in listOf("home", "files", "tools", "more")) { Ad(); BottomBar(r) }
@@ -232,6 +233,7 @@ fun Home() {
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun Entry(f: File, mode: Int, on: Boolean, tap: () -> Unit, act: (String) -> Unit) {
     var m by remember { mutableStateOf(false) }
@@ -244,13 +246,13 @@ fun Entry(f: File, mode: Int, on: Boolean, tap: () -> Unit, act: (String) -> Uni
             DropdownMenu(m, { m = false }) { acts.forEach { a -> DropdownMenuItem({ Text(t(a)) }, { m = false; act(a) }) } }
         }
     }
-    if (mode == 0) Column(Modifier.clip(RoundedCornerShape(18.dp)).background(bg).clickable(onClick = tap).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    if (mode == 0) Column(Modifier.clip(RoundedCornerShape(18.dp)).background(bg).combinedClickable(onClick = tap, onLongClick = { act("Select") }).padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Thumb(f, Modifier.size(56.dp).clip(RoundedCornerShape(12.dp)))
         Text(f.name, fontSize = 12.sp, maxLines = 2, textAlign = TextAlign.Center); menu()
     } else {
         val card = mode == 2
         Row(Modifier.fillMaxWidth().padding(vertical = if (card) 5.dp else 1.dp).clip(RoundedCornerShape(if (card) 22.dp else 10.dp))
-            .background(bg).clickable(onClick = tap).padding(if (card) 14.dp else 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            .background(bg).combinedClickable(onClick = tap, onLongClick = { act("Select") }).padding(if (card) 14.dp else 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Thumb(f, Modifier.size(if (card) 52.dp else 38.dp).clip(RoundedCornerShape(12.dp)), 22.sp)
             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                 Text(f.name, maxLines = 1)
@@ -277,11 +279,16 @@ fun Browser() {
     var gal by remember { mutableStateOf<File?>(null) }
     var newG by remember { mutableStateOf<File?>(null) }
     var busy by remember { mutableStateOf(false) }
+    var load by remember { mutableStateOf(true) }
     val root = roots.firstOrNull { dir.path.startsWith(it.path) } ?: roots[0]
     SideEffect { Nav.cwd = dir }
     fun nav(f: File) { dir = f; pathTxt = f.path; sel = setOf() }
     LaunchedEffect(Nav.cwd) { Nav.cwd?.let { if (it != dir && it.isDirectory) nav(it) } }
-    LaunchedEffect(dir, Nav.tick, Prefs.hidden) { files = withContext(Dispatchers.IO) { FS.list(dir) } }
+    LaunchedEffect(dir, Nav.tick, Prefs.hidden) {
+        load = true
+        files = withContext(Dispatchers.IO) { FS.list(dir) }
+        load = false
+    }
     BackHandler(sel.isNotEmpty() || dir != root) { if (sel.isNotEmpty()) sel = setOf() else dir.parentFile?.let { nav(it) } }
 
     fun tap(f: File) {
@@ -290,7 +297,9 @@ fun Browser() {
         else Nav.open(c, f)
     }
     fun fail(r: Result<Unit>) { r.onFailure { Toast.makeText(c, it.message ?: "Error", Toast.LENGTH_LONG).show() } }
-    fun act(f: File, a: String) {
+    fun act(f0: File, a0: String) {
+        val a = if (a0 == "Move") "Cut" else a0
+        val f = f0
         val l = if (f in sel) sel.toList() else listOf(f)
         when (a) {
             "Open" -> if (f.isDirectory) nav(f) else Nav.open(c, f)
@@ -318,7 +327,7 @@ fun Browser() {
     Column(Modifier.fillMaxSize()) {
         val back: (() -> Unit)? = if (dir != root) ({ nav(dir.parentFile ?: dir) }) else null
         TopBar(dir.name.ifEmpty { "/" }, back) { TextButton({ Nav.go("gallery", "all") }) { Text("🔍") } }
-        if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+        if (load && files.isEmpty() || busy) ScanBar(t("Loading") + "…")
         Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 roots.forEachIndexed { i, r ->
@@ -336,7 +345,7 @@ fun Browser() {
             keyboardActions = KeyboardActions(onGo = { File(pathTxt).takeIf { it.isDirectory }?.let { nav(it) } }))
         if (sel.isNotEmpty()) Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("✓ ${sel.size}", Modifier.padding(end = 8.dp))
-            listOf("Copy", "Cut", "Compress", "Delete").forEach { a -> TextButton({ act(sel.first(), a) }) { Text(t(a), fontSize = 12.sp) } }
+            listOf("Copy", "Move", "Compress", "Delete").forEach { a -> TextButton({ act(sel.first(), a) }) { Text(t(a), fontSize = 12.sp) } }
             TextButton({ sel = setOf() }) { Text("✕") }
         }
         if (Prefs.view == 0) LazyVerticalGrid(GridCells.Adaptive(100.dp), Modifier.weight(1f), contentPadding = PaddingValues(12.dp),

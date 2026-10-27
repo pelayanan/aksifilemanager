@@ -23,3 +23,15 @@ Owner: pelayanan (via Telegram bridge, workdir /root)
 - Banner 1024x500: sudah ada (store/banner_1024x500.png) -> dilewati.
 - Screenshots: sudah ada 34 file di store/screenshots/ -> dilewati.
 - Tidak ada perubahan kode; hanya file session.txt ini dibuat dan di-push.
+
+## Session 2026-10-27 (v1.2, versionCode 3)
+- PDF viewer: pinch zoom + pan (1x-10x, tombol reset 1:1) — fix "pdf ga bisa zoom"
+- Loading indicator: Browser (list folder), Gallery (scan) + ScanBar+debounce 350ms ketik search — fix "belum ada loading"
+- Storage Analyzer & Duplicates: progress verbose (jml file, size, folder/hash berjalan) — fix #3 & #4 (debug progress LeafExplore)
+- Header baru di semua layar: gradient biru blue, tombol back pill, teks putih — fix "header polosan"
+- QR camera: bind ulang via LaunchedEffect + error state + tombol restart — fix "camera qr belum fungsi"
+- Buka gambar: tips preview dulu (horizontal swipe antar foto, pin zoom, menu Share/Edit/Open with/Delete, bar bawah Share/Edit) — fix #7
+- Long-press select di Browser (semua jenis file) + Gallery (img/vid/doc/apk/aud): select → Copy/Move/Delete (+Share di gallery) — fix #8
+- Perf: cache snapshot file-tree (30s) + cache hasil scan per (root|cat|query) → reload tidak full-walk tiap refresh — fix #9
+- Beranda Images/Videos tab: fix "ga fungsi" (scan per-kategori + loading + cache)
+- v1.2 versionCode 3; APK/AAB release re-signed rebuild di store/
