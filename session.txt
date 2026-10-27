@@ -43,3 +43,10 @@ Owner: pelayanan (via Telegram bridge, workdir /root)
 - Version di-naikkan: versionCode 3 -> 4, versionName 1.2 -> 1.2.1 (app/build.gradle.kts)
 - Build: assembleDebug sukses; assembleRelease (R8 minify) sukses & signed tukangdigital.keystore (CN=DoniMuslimin); bundleRelease sukses. Output ditimpa: store/aksifile-release.apk (29.98 MB), store/aksifile-release.aab (24.45 MB) + store/aksifile-debug.apk
 - Gradle path untuk build berikutnya: /tmp/opencode/env/gradle-8.11.1/bin/gradle (JVM args -Xmx3g)
+
+## Session 2026-10-27 (ketiga)
+- AdMob live dari test: App ID -> ca-app-pub-6396355089911498~2853038742 (AndroidManifest APPLICATION_ID), Banner unit id -> ca-app-pub-6396355089911498/8901326360 (Ui.kt fungsi Ad(), AdSize.BANNER)
+- Penempatan banner: tetap di atas BottomBar pada tab home/files/tools/more (MainActivity line 146); guard runCatching + Prefs.ads tetap; tidak menutup UI/sticky-overlap -> sesuai kebijakan AdMob
+- Verifikasi Robolectric: 4 tab (home/files/tools/more) tidak crash dengan ID live (banner tidak fill di Robolectric = normal); screenshot store/screenshots/36_ad_home s/d 39_ad_more
+- Version di-naikkan: versionCode 4 -> 5, versionName 1.2.1 -> 1.2.2
+- assembleRelease (R8) + bundleRelease sukses, signed tukangdigital.keystore; output ditimpa store/aksifile-release.apk, .aab, store/aksifile-debug.apk

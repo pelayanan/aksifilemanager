@@ -2,7 +2,7 @@ plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
 android {
     namespace = "id.aksisoft.aksifile"
     compileSdk = 36
-    defaultConfig { applicationId = "id.aksisoft.aksifile"; minSdk = 26; targetSdk = 36; versionCode = 4; versionName = "1.2.1" }
+    defaultConfig { applicationId = "id.aksisoft.aksifile"; minSdk = 26; targetSdk = 36; versionCode = 5; versionName = "1.2.2" }
     val keystoreProps = rootProject.file("keystore.properties")
     val keystoreCfg = if (keystoreProps.exists()) {
         val map = keystoreProps.readLines().filter { "=" in it }.associate { l -> l.substringBefore("=").trim() to l.substringAfter("=").trim() }

@@ -310,7 +310,7 @@ fun SRow(label: String, value: String = "", sw: Boolean? = null, onClick: () -> 
 fun Ad() {
     if (Prefs.ads) AndroidView({ ctx ->
         runCatching {
-            AdView(ctx).apply { setAdSize(AdSize.BANNER); adUnitId = "ca-app-pub-3940256099942544/6300978111"; loadAd(AdRequest.Builder().build()) }
+            AdView(ctx).apply { setAdSize(AdSize.BANNER); adUnitId = "ca-app-pub-6396355089911498/8901326360"; loadAd(AdRequest.Builder().build()) }
         }.getOrElse { View(ctx) }
     }, Modifier.fillMaxWidth())
 }
