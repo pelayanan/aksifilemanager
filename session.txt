@@ -50,3 +50,8 @@ Owner: pelayanan (via Telegram bridge, workdir /root)
 - Verifikasi Robolectric: 4 tab (home/files/tools/more) tidak crash dengan ID live (banner tidak fill di Robolectric = normal); screenshot store/screenshots/36_ad_home s/d 39_ad_more
 - Version di-naikkan: versionCode 4 -> 5, versionName 1.2.1 -> 1.2.2
 - assembleRelease (R8) + bundleRelease sukses, signed tukangdigital.keystore; output ditimpa store/aksifile-release.apk, .aab, store/aksifile-debug.apk
+
+## Session 2026-10-27 (keempat)
+- Cek rutin: repo dibaca ulang. Build v1.2.2 (versionCode 5) sudah lengkap & sudah ter-push (APK 29.99MB, AAB 24.45MB, debug APK di store/) -> build TIDAK diproses ulang (sesuai aturan: kalau sudah ada build, jangan diproses).
+- Logo sudah ada -> dilewati. Banner 1024x500 sudah ada -> dilewati. Screenshots 38 file sudah ada.
+- Tidak ada permintaan perubahan fitur pada session ini; hanya append session.txt dan push.
