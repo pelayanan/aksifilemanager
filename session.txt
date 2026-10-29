@@ -55,3 +55,9 @@ Owner: pelayanan (via Telegram bridge, workdir /root)
 - Cek rutin: repo dibaca ulang. Build v1.2.2 (versionCode 5) sudah lengkap & sudah ter-push (APK 29.99MB, AAB 24.45MB, debug APK di store/) -> build TIDAK diproses ulang (sesuai aturan: kalau sudah ada build, jangan diproses).
 - Logo sudah ada -> dilewati. Banner 1024x500 sudah ada -> dilewati. Screenshots 38 file sudah ada.
 - Tidak ada permintaan perubahan fitur pada session ini; hanya append session.txt dan push.
+
+## Session 2026-10-29 (kelima)
+- Repo dibaca ulang. Konfirmasi status build: v1.2.2 (versionCode 5) lengkap di store/ -> build TIDAK diproses ulang (sesuai aturan: kalau sudah ada build, jangan diproses).
+- Verifikasi konfigurasi: targetSdk 36 (Android 16, kebijakan Google Play per 31 Agustus 2026) OK; isMinifyEnabled=true + isShrinkResources=true (R8) OK; signing tukangdigital.keystore OK.
+- Logo sudah ada (drawable/ic_logo.xml + assets SVG) -> dilewati. Banner 1024x500 sudah ada (store/banner_1024x500.png) -> dilewati. Screenshots 38 file sudah ada -> tidak ada halaman berubah, tidak ada shot baru.
+- Tidak ada permintaan perubahan kode/fitur pada session ini; hanya append session.txt dan push.
