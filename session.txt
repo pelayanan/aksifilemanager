@@ -67,3 +67,9 @@ Owner: pelayanan (via Telegram bridge, workdir /root)
 - Verifikasi konfigurasi tetap OK: compileSdk=36, targetSdk=36 (Android 16, kebijakan Google Play per 31 Agustus 2026), versionCode=5, versionName=1.2.2, R8 minify+shrinkResources aktif, signing tukangdigital.keystore.
 - Logo sudah ada (ic_logo.xml + assets SVG) -> dilewati. Banner 1024x500 sudah ada (store/banner_1024x500.png) -> dilewati. Screenshots 38 file di store/screenshots/ sudah ada -> dilewati.
 - Tidak ada permintaan perubahan kode/fitur pada session ini (user hanya kirim token GitHub + instruksi rutin); hanya append session.txt ini dan push.
+
+## Session 2026-10-29 (ketujuh)
+- Repo dibaca ulang (clone fresh dari GitHub via token terbaru). Konfirmasi status build: v1.2.2 (versionCode 5) lengkap di store/ (aksifile-release.apk 29.99 MB, aksifile-release.aab 24.45 MB, aksifile-debug.apk 44.75 MB, semua utuh) -> build TIDAK diproses ulang (sesuai aturan: kalau sudah ada build, jangan diproses).
+- Verifikasi konfigurasi tetap OK: compileSdk=36, targetSdk=36 (Android 16, kebijakan Google Play per 31 Agustus 2026), versionCode=5, versionName=1.2.2, R8 minify+shrinkResources aktif, signing tukangdigital.keystore (alias tukangdigital, password MakMakPandugo).
+- Logo sudah ada (ic_logo.xml + assets SVG) -> dilewati. Banner 1024x500 sudah ada (store/banner_1024x500.png) -> dilewati. Screenshots 38 file di store/screenshots/ sudah ada -> dilewati.
+- Tidak ada permintaan perubahan kode/fitur pada session ini (user hanya kirim kredensial + instruksi rutin); hanya append session.txt ini dan push.
