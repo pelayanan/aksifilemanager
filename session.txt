@@ -87,8 +87,17 @@ Owner: pelayanan (via Telegram bridge, workdir /root)
 - Tidak ada permintaan perubahan kode/fitur pada session ini (user hanya kirim token + instruksi rutin); hanya append session.txt ini dan push.
 
 ## Session 2026-10-30 (kesepuluh)
+
 - Repo dibaca ulang (clone fresh dari GitHub via token). Konfirmasi status build: v1.2.2 (versionCode 5) lengkap di store/ (aksifile-release.apk 29.99 MB, aksifile-release.aab 24.45 MB, aksifile-debug.apk 44.75 MB, semua utuh, dex terverifikasi) -> build TIDAK diproses ulang (sesuai aturan: kalau sudah ada build, jangan diproses).
 - Verifikasi konfigurasi tetap OK: compileSdk=36, targetSdk=36 (Android 16, kebijakan Google Play per 31 Agustus 2026), versionCode=5, versionName=1.2.2, R8 minify+shrinkResources aktif, signing tukangdigital.keystore (password MakMakPandugo).
 - Keystore di app/ dibandingkan dengan file yang diunduh today dari workers.dev -> identik (byte-for-byte).
 - Logo sudah ada (ic_logo.xml + assets SVG) -> dilewati. Banner 1024x500 sudah ada (store/banner_1024x500.png) -> dilewati (banner dikirim ke Telegram sesuai permintaan). Screenshots 38 file di store/screenshots/ sudah ada.
 - Tidak ada permintaan perubahan kode/fitur pada session ini (user hanya kirim token + instruksi rutin); hanya append session.txt ini dan push.
+
+## Session 2026-10-30 (kesebelas) — publish ke Play Store
+- CDP browser cdp9777.aksisoft.web.id: draft app sudah ada (4972824757407851237), tidak create new. Track produksi berisi rilis draf v1.2.2 (kode 5) + listingan default lengkap (ikon 1/1, banner 1/1, 7 screenshot, teks lengkap), semua kuesioner Konten aplikasi (rating, audiens 18+, privacy URL https://aksisoft.web.id/privacy-policy-aksifile/, pernyataan iklan, Keamanan Data, aplikasi kesehatan) sudah terisi & negara 177.
+- Blokir: error rilis "aplikasi tidak mendukung ukuran halaman memori 16 KB" (wajib Google Play sejak Nov 2025). Penyebab: native lib 4KB dari com.google.mlkit:barcode-scanning:17.2.0 (libbarhopper_v3.so) & androidx.camera 1.3.4 (libimage_processing_util_jni.so).
+- Fix: dependencies di-upgrade -> camera-camera2/lifecycle/view 1.4.2 + barcode-scanning 17.3.0; versionCode 6, versionName 1.2.3 (app/build.gradle.kts). Rebuild (JDK21, Gradle 8.11.1, SDK 36) assembleRelease+bundleRelease sukses 20m10s.
+- Verifikasi AAB baru: semua .so arm64/x86_64/armeabi/x86 0x4000 (16KB) kecuali libbarhopper 32-bit (ABI legacy tidak berlaku); jarsigner verified (tukangdigital). store/aksifile-release.aab ditimpa (24.4MB -> 25.4MB).
+- Upload via CDP: trycloudflare tunnel + download ke /tmp/Downloads, setFileInputFiles, proses selesai; artifact lama 5 (1.2.2) dihapus dari rilis draf; nama rilis "6 (1.2.3)", catatan rilis <id> v1.2.3 (multi-baris tag bahasa). Simpan rilis: 0 error, 1 warning (debug symbols native, opsional).
+- Ringkasan publikasi: changelist 11 item siap; selanjutnya "Kirim 11 perubahan untuk ditinjau".
