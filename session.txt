@@ -126,3 +126,13 @@ Owner: pelayanan (via Telegram bridge, workdir /root)
 - Logo ada (app/src/main/res/drawable/ic_logo.xml + assets/aksi-file-manager-icon.svg) -> dilewati. Banner 1024x500 ada (store/banner_1024x500.png, terverifikasi ukuran 1024x500) -> dilewati & dikirim ke Telegram. Screenshots 38 file di store/screenshots/ ada -> tidak ada halaman berubah, tidak ada shot baru.
 - Tidak ada permintaan perubahan kode/fitur; hanya append session.txt ini, push, dan kirim banner.
 - Catatan tindak lanjut (diperbarui): APK publik & debug masih v1.2.2; pemilik disarankan rebuild assembleRelease + assembleDebug agar APK publik ikut v1.2.3 (tanpa menaikkan version).
+
+## Session 2026-11-17 (keempat belas) — rebuild sinkron APK + model hy4
+- Menindaklanjuti catatan sesi sebelumnya: rebuild assembleDebug + assembleRelease + bundleRelease TANPA menaikkan version (tetap versionCode 6 / versionName 1.2.3). Build ulang diperlukan karena APK/debug masih v1.2.2 sedangkan AAB sudah v1.2.3.
+- Build: JDK 21, Gradle 8.11.1, SDK /opt/android-sdk (platform 36), -Xmx3g, --no-daemon. assembleDebug sukses; assembleRelease (R8 minify + shrinkResources) sukses; bundleRelease sukses. BUILD SUCCESSFUL in 17m 8s (55 actionable tasks).
+- Output ditimpa dengan NAMA FILE YANG SAMA (tidak buat file baru): store/aksifile-release.apk (32.07 MB, sebelumnya 29.99 MB), store/aksifile-release.aab (25.40 MB), store/aksifile-debug.apk (47.02 MB, sebelumnya 44.75 MB).
+- Verifikasi: release APK & debug APK versionCode 6 / versionName 1.2.3, targetSdk 36, compileSdk 36; apksigner verify OK, cert tukangdigital CN=DoniMuslimin SHA-256 cb0b960f...bc; AAB manifest versionCode 6 / 1.2.3, minSdk 26, targetSdk 36.
+- Permintaan "buat folder photo jadi nama gallery": folder /root/gallery dibuat, berisi 38 screenshot hasil salinan dari store/screenshots/.
+- Permintaan model: zen/hy4-flash-free didaftarkan di /root/.config/opencode/opencode.json pada provider zen (modelID hy4-flash-free); default model juga zen/hy4-flash-free. Terverifikasi via /v1/models (id hy4-flash-free ada).
+- Logo sudah ada -> dilewati. Banner 1024x500 sudah ada -> dilewati. Tidak ada perubahan kode/halaman -> tidak ada screenshot baru; screenshot existing dikirim ke Telegram.
+- Push: commit session.txt + 3 artifact (APK release, AAB, APK debug) ke origin/main.
