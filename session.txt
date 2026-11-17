@@ -113,3 +113,16 @@ Owner: pelayanan (via Telegram bridge, workdir /root)
 - Logo ada (app/src/main/res/drawable/ic_logo.xml + assets/aksi-file-manager-icon.svg) -> dilewati. Banner 1024x500 ada (store/banner_1024x500.png) -> dilewati & dikirim ke Telegram. Screenshots 38 file di store/screenshots/ ada -> tidak ada halaman berubah, tidak ada shot baru.
 - Tidak ada permintaan perubahan kode/fitur; hanya append session.txt ini, push, dan kirim banner.
 - Catatan tindak lanjut: jika pemilik ingin APK publik ikut v1.2.3, perlu rebuild assembleRelease (+assembleDebug) tanpa menaikkan version lagi.
+
+## Session 2026-11-17 (ketiga belas) — checkpoint rutin + sistem build disiapkan
+- Repo dibaca ulang (clone fresh via token GitHub). Build sudah ada di store/ -> build TIDAK diproses ulang (sesuai aturan: kalau sudah ada build, jangan diproses).
+- Menyiapkan ulang sistem build di environment baru: JDK 21, Gradle 8.11.1 (/tmp/opencode/env/gradle-8.11.1), Android SDK /opt/android-sdk (platform-tools, platforms;android-36, build-tools 35.0.0 & 36.0.0). local.properties dibuat -> sdk.dir=/opt/android-sdk (tidak di-push, gitignore). bundletool 1.18.3 di /tmp/opencode/bundletool.jar.
+- Verifikasi artifact dengan aapt2 36.0.0 + bundletool 1.18.3 + apksigner:
+  - store/aksifile-release.aab: versionCode 6, versionName 1.2.3, minSdk 26, targetSdk 36, compileSdk 36 -> SESUAI source (HEAD 059c5e1, source v1.2.3 commit 2e1c8bc).
+  - store/aksifile-release.apk: versionCode 5, versionName 1.2.2 -> MASIH STALE (commit v1.2.3 hanya menimpa AAB; APK/debug tidak diperbarui). apksigner verify OK, cert tukangdigital CN=DoniMuslimin SHA-256 cb0b960f...bc.
+  - store/aksifile-debug.apk: versionCode 5 / 1.2.2 (debug).
+- Keystore: app/tukangdigital.keystore byte-identik dengan unduhan workers.dev (md5 35cbf40b964764d681d096911133a324); keytool: JKS, alias tukangdigital, valid s/d 2044, SHA-256 cert cocok.
+- Konfigurasi: compileSdk=36, targetSdk=36 (Android 16, kebijakan Play 31 Agu 2026), R8 minify + shrinkResources aktif.
+- Logo ada (app/src/main/res/drawable/ic_logo.xml + assets/aksi-file-manager-icon.svg) -> dilewati. Banner 1024x500 ada (store/banner_1024x500.png, terverifikasi ukuran 1024x500) -> dilewati & dikirim ke Telegram. Screenshots 38 file di store/screenshots/ ada -> tidak ada halaman berubah, tidak ada shot baru.
+- Tidak ada permintaan perubahan kode/fitur; hanya append session.txt ini, push, dan kirim banner.
+- Catatan tindak lanjut (diperbarui): APK publik & debug masih v1.2.2; pemilik disarankan rebuild assembleRelease + assembleDebug agar APK publik ikut v1.2.3 (tanpa menaikkan version).
